@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Win32;
@@ -71,6 +72,41 @@ public sealed class PowerPlanFix : IFix
     }
 }
 
+public sealed class PriorityFix : IFix
+{
+    readonly string _processName;
+
+    public PriorityFix(string processName) => _processName = processName;
+
+    public string Label => "Raise the game's priority to High";
+
+    public FixResult Apply()
+    {
+        var undos = new List<UndoRecord>();
+        try
+        {
+            int changed = 0;
+            foreach (var p in Process.GetProcessesByName(_processName))
+            {
+                using (p)
+                {
+                    undos.Add(new UndoRecord("priority", _processName,
+                        p.Id.ToString(CultureInfo.InvariantCulture), p.PriorityClass.ToString(), null, true));
+                    p.PriorityClass = ProcessPriorityClass.High;
+                    changed++;
+                }
+            }
+            return changed > 0
+                ? new FixResult(true, "Applied: game priority is now High", undos)
+                : new FixResult(false, "Failed: the game is not running", undos);
+        }
+        catch (Exception ex)
+        {
+            return new FixResult(false, $"Failed: game priority ({ex.Message})", undos);
+        }
+    }
+}
+
 /// <summary>Undo journal in %AppData%\Sweep\games-undo.json.</summary>
 public static class Journal
 {
@@ -107,6 +143,14 @@ public static class Journal
         var list = Load();
         list.AddRange(records);
         Save(list);
+    }
+
+    /// <summary>Puts changes back right away (used by Test Run for fixes that did not help).</summary>
+    public static bool UndoNow(IEnumerable<UndoRecord> records)
+    {
+        bool ok = true;
+        foreach (var r in records.Reverse()) ok &= UndoOne(r);
+        return ok;
     }
 
     public static string UndoAll()
@@ -148,6 +192,20 @@ public static class Journal
                 else
                     return false;
                 return true;
+            }
+            if (r.Kind == "priority")
+            {
+                try
+                {
+                    using var p = Process.GetProcessById(int.Parse(r.Name, CultureInfo.InvariantCulture));
+                    if (p.ProcessName != r.Target) return true; // id reused by another program: nothing to put back
+                    p.PriorityClass = Enum.Parse<ProcessPriorityClass>(r.OldValue ?? "Normal");
+                    return true;
+                }
+                catch (ArgumentException)
+                {
+                    return true; // the game already closed; its priority reset itself
+                }
             }
             if (r.Kind == "power")
             {

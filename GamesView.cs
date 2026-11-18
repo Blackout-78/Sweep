@@ -21,6 +21,11 @@ public sealed class GamesView : UserControl
     readonly StackPanel _list = new() { Spacing = 8 };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold };
 
+    readonly Button _testRun = new() { Content = "Test Run" };
+    readonly Button _stop = new() { Content = "Stop", IsEnabled = false };
+    readonly StackPanel _log = new() { Spacing = 4 };
+    CancellationTokenSource? _cts;
+
     List<Finding> _findings = new();
     string? _exe;
 
@@ -47,7 +52,8 @@ public sealed class GamesView : UserControl
             _status.Text = await Task.Run(Journal.UndoAll);
         };
 
-        var testRun = new Button { Content = "Test Run (next release)", IsEnabled = false };
+        _testRun.Click += async (_, _) => await DoTestRun();
+        _stop.Click += (_, _) => _cts?.Cancel();
 
         var row1 = new StackPanel
         {
@@ -59,7 +65,7 @@ public sealed class GamesView : UserControl
         {
             Orientation = Orientation.Horizontal,
             Spacing = 10,
-            Children = { _mode, scan, undo, testRun }
+            Children = { _mode, scan, undo, _testRun, _stop }
         };
 
         var root = new StackPanel
@@ -79,6 +85,7 @@ public sealed class GamesView : UserControl
                 row1,
                 row2,
                 _status,
+                _log,
                 _list
             }
         };
@@ -101,6 +108,44 @@ public sealed class GamesView : UserControl
 
         _exe = files[0].TryGetLocalPath();
         _exeText.Text = _exe ?? "No game selected (system-wide scan only)";
+    }
+
+    async Task DoTestRun()
+    {
+        if (_exe == null)
+        {
+            _status.Text = "Choose the game .exe first, start the game, then click Test Run.";
+            return;
+        }
+
+        _log.Children.Clear();
+        _cts = new CancellationTokenSource();
+        _testRun.IsEnabled = false;
+        _stop.IsEnabled = true;
+        var progress = new Progress<string>(line =>
+        {
+            _status.Text = line;
+            _log.Children.Add(new TextBlock { Text = line, TextWrapping = TextWrapping.Wrap, Opacity = 0.85 });
+        });
+        try
+        {
+            await TestRun.RunAsync(_exe, progress, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _status.Text = "Test Run stopped. Any change that was not yet measured was undone.";
+        }
+        catch (Exception ex)
+        {
+            _status.Text = "Test Run failed: " + ex.Message;
+        }
+        finally
+        {
+            _testRun.IsEnabled = true;
+            _stop.IsEnabled = false;
+            _cts?.Dispose();
+            _cts = null;
+        }
     }
 
     async Task DoScan()

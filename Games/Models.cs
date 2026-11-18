@@ -16,6 +16,9 @@ public sealed class Finding
     /// <summary>false = this check looks fine (shown as OK / info).</summary>
     public bool IsProblem { get; init; } = true;
 
+    /// <summary>true = Test Run can apply this fix live and measure the effect (no game restart).</summary>
+    public bool LiveTestable { get; init; }
+
     public IFix? Fix { get; init; }
     public bool Fixed { get; set; }
 }

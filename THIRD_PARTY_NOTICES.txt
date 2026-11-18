@@ -1,0 +1,9 @@
+Sweep bundles one third-party program in its release zip.
+
+PresentMon.exe (console application, version 2.5.1)
+  Copyright (c) Intel Corporation
+  License: MIT
+  Source: https://github.com/GameTechDev/PresentMon
+  Used by Sweep's Games tab "Test Run" to read frame times. It only listens to
+  Windows presentation events. It never touches or injects into games.
+  The Sweep app itself never connects to the internet.

@@ -1,10 +1,12 @@
-# Sweep v0.1.1 "Games Scan Fix"
+# Sweep v0.2.0 "Test Run"
 
-**Fixed**
-- Power plan check no longer treats "Ultimate Performance" as a problem, so Sweep will not switch you down to High performance
-- Background apps list no longer shows Windows system processes such as svchost
-- A fixed item now says what was applied instead of repeating the old warning
+**Added**
+- Games tab "Test Run": start the game, click Test Run, keep playing. Sweep measures frame times, finds stutter, tries one fix at a time and keeps only what clearly helps; anything that does not help is undone
+- Reports the present mode (windowed or fullscreen) and the busiest apps during the test
+- Raises the game's priority to High as a measured, undoable fix
+- Bundles Intel PresentMon 2.5.1 (MIT license) for frame timing; see THIRD_PARTY_NOTICES.txt
 
-**From v0.1.0 "Games Scan"**
-- Games tab: scan for causes of lag, jitter and screen tearing, with Safe/Caution fixes and Undo all changes
-- Privacy, Cleaner and Tweaks tabs are still placeholders; Test Run is the next release
+**Notes**
+- Test Run needs administrator rights: right-click Sweep.exe and choose Run as administrator
+- GPU preference and fullscreen optimizations need a game restart, so they stay as Fix buttons on the scan
+- Privacy, Cleaner and Tweaks tabs are still placeholders

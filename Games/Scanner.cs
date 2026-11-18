@@ -15,7 +15,7 @@ public static class Scanner
     const string Layers = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
     const string FsoFlag = "DISABLEDXMAXIMIZEDWINDOWEDMODE";
 
-    static readonly HashSet<string> IgnoreProcesses = new(StringComparer.OrdinalIgnoreCase)
+    internal static readonly HashSet<string> IgnoreProcesses = new(StringComparer.OrdinalIgnoreCase)
     {
         // Sweep itself and Windows system processes: closing these is never the right advice.
         "Sweep", "System", "Registry", "Memory Compression", "MemCompression", "dwm", "Idle",
@@ -88,6 +88,7 @@ public static class Scanner
             Risk = Risk.Safe,
             Category = Category.Lag,
             IsProblem = !good,
+            LiveTestable = true,
             Fix = good ? null : new PowerPlanFix()
         };
     }
@@ -104,6 +105,7 @@ public static class Scanner
                 : "Nothing to fix.",
             Risk = Risk.Safe,
             Category = Category.Jitter,
+            LiveTestable = true,
             IsProblem = off,
             Fix = off
                 ? new RegistryFix("Turn on Windows Game Mode",
@@ -125,6 +127,7 @@ public static class Scanner
                 : "Nothing to fix.",
             Risk = Risk.Safe,
             Category = Category.Jitter,
+            LiveTestable = true,
             IsProblem = on,
             Fix = on
                 ? new RegistryFix("Turn off Game Bar background recording",

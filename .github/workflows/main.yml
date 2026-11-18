@@ -29,6 +29,14 @@ jobs:
           dotnet publish Sweep.csproj -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:Version="$ver.${{ github.run_number }}" -o publish
+          # Intel PresentMon (MIT license) is bundled so Test Run works offline.
+          # Pinned to one release and checked against its published SHA-256.
+          $pm = "publish\PresentMon.exe"
+          Invoke-WebRequest -Uri "https://github.com/GameTechDev/PresentMon/releases/download/v2.5.1/PresentMon-2.5.1-x64.exe" -OutFile $pm
+          $hash = (Get-FileHash $pm -Algorithm SHA256).Hash
+          Write-Host "PresentMon SHA256: $hash"
+          if ($hash -ne "9BEC3083069F58F911E6A512F4806DB51A27BD096103087BC1D05EF54C80A191") { throw "PresentMon hash mismatch: $hash" }
+          Copy-Item THIRD_PARTY_NOTICES.txt publish\
           Compress-Archive -Path publish\* -DestinationPath "Sweep-${{ github.ref_name }}-win-x64.zip"
 
       - name: Create GitHub release (tags only)
