@@ -17,7 +17,11 @@ public static class Scanner
 
     static readonly HashSet<string> IgnoreProcesses = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Sweep", "System", "Registry", "Memory Compression", "dwm", "Idle"
+        // Sweep itself and Windows system processes: closing these is never the right advice.
+        "Sweep", "System", "Registry", "Memory Compression", "MemCompression", "dwm", "Idle",
+        "svchost", "csrss", "lsass", "services", "winlogon", "wininit", "explorer",
+        "MsMpEng", "WmiPrvSE", "audiodg", "RuntimeBroker", "SearchHost", "ShellExperienceHost",
+        "StartMenuExperienceHost", "fontdrvhost", "sihost", "taskhostw", "ctfmon"
     };
 
     public static List<Finding> Scan(string? exe)
@@ -67,7 +71,11 @@ public static class Scanner
         if (guid == null)
             return Info("Power plan", "Could not read the active power plan.", Category.Lag);
 
-        bool good = guid == PowerPlanFix.HighPerformance || guid == PowerPlanFix.Ultimate;
+        // An Ultimate Performance plan made with "powercfg -duplicatescheme" gets a new GUID,
+        // so also match by name. Never "fix" a plan that is already a performance plan.
+        bool good = guid == PowerPlanFix.HighPerformance || guid == PowerPlanFix.Ultimate
+                    || (name?.Contains("Ultimate", StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (name?.Contains("High performance", StringComparison.OrdinalIgnoreCase) ?? false);
         return new Finding
         {
             Title = good ? $"Power plan: {name}" : $"Power plan is \"{name}\"",

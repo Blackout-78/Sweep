@@ -178,7 +178,7 @@ public sealed class GamesView : UserControl
                 tagBorder,
                 new TextBlock
                 {
-                    Text = f.Title,
+                    Text = f.Fixed && f.Fix != null ? "Fixed: " + f.Fix.Label : f.Title,
                     FontWeight = FontWeight.SemiBold,
                     VerticalAlignment = VerticalAlignment.Center
                 },
@@ -191,7 +191,12 @@ public sealed class GamesView : UserControl
                 }
             }
         });
-        body.Children.Add(new TextBlock { Text = f.Detail, TextWrapping = TextWrapping.Wrap, Opacity = 0.8 });
+        body.Children.Add(new TextBlock
+        {
+            Text = f.Fixed ? "Applied. Use \"Undo all changes\" to put it back." : f.Detail,
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.8
+        });
 
         if (f.IsProblem && !f.Fixed && f.Fix != null)
         {
