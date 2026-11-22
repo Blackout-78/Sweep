@@ -7,7 +7,7 @@ public static class AppInfo
     public const string Name = "Sweep";
 
     /// <summary>Real release name. Change it together with RELEASE_NOTES.md for each release.</summary>
-    public const string ReleaseName = "Test Run";
+    public const string ReleaseName = "Safe Test Run";
 
     public const string ReleasesUrl = "https://github.com/Blackout-78/Sweep/releases";
 

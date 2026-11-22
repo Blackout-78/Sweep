@@ -1,0 +1,19 @@
+# .NET build output
+bin/
+obj/
+publish/
+.vs/
+*.user
+*.suo
+
+# keys and secrets
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+KEYSTORE_*.txt
+github-secrets*.txt
+keystore.properties

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Security.Principal;
 
 namespace Sweep.Games;
@@ -88,6 +89,28 @@ public static class TestRun
     const int BaselineSeconds = 45;
     const int RoundSeconds = 40;
 
+    // Pinned SHA-256 of the bundled PresentMon 2.5.1; must match .github/workflows/main.yml.
+    const string PresentMonSha256 = "9BEC3083069F58F911E6A512F4806DB51A27BD096103087BC1D05EF54C80A191";
+
+    /// <summary>Null when PresentMon.exe is present and is exactly the pinned build; otherwise a message for the user.</summary>
+    static string? CheckPresentMon()
+    {
+        if (!File.Exists(PresentMonPath))
+            return "PresentMon.exe is missing next to Sweep.exe. Extract the whole release zip and keep the files together.";
+        try
+        {
+            using var fs = File.OpenRead(PresentMonPath);
+            var hash = Convert.ToHexString(SHA256.HashData(fs));
+            if (!hash.Equals(PresentMonSha256, StringComparison.OrdinalIgnoreCase))
+                return "PresentMon.exe does not match the build Sweep expects, so it was not started. Download the Sweep release again and extract the whole zip.";
+        }
+        catch (Exception e)
+        {
+            return "PresentMon.exe could not be checked (" + e.Message + "), so it was not started.";
+        }
+        return null;
+    }
+
     static string PresentMonPath => Path.Combine(AppContext.BaseDirectory, "PresentMon.exe");
 
     static bool IsAdmin()
@@ -98,9 +121,10 @@ public static class TestRun
 
     public static async Task RunAsync(string exePath, IProgress<string> log, CancellationToken ct)
     {
-        if (!File.Exists(PresentMonPath))
+        var pmProblem = CheckPresentMon();
+        if (pmProblem != null)
         {
-            log.Report("PresentMon.exe is missing next to Sweep.exe. Extract the whole release zip and keep the files together.");
+            log.Report(pmProblem);
             return;
         }
         if (!IsAdmin())
@@ -225,6 +249,9 @@ public static class TestRun
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+
+        var pmProblem = CheckPresentMon();   // checked again right before the elevated start
+        if (pmProblem != null) return (null, pmProblem);
 
         var cpuBefore = CpuSnapshot();
         using var p = Process.Start(psi);
